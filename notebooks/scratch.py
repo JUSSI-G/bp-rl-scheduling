@@ -1,9 +1,10 @@
 import numpy as np
-from src.codes import shift, monomial
+from src.codes import bb_code
 
-M = monomial(6, 6, 3, 0)
-print(M.shape)
-print(M.sum(axis=1).min(), M.sum(axis=1).max())
-print(divmod(M[0].argmax(), 6))
-print(divmod(monomial(6, 6, 0, 2)[0].argmax(), 6))
-print(monomial(6, 6, 0, 0).sum())
+hx, hz = bb_code(6, 6, [(3,0), (0,1), (0,2)], [(0,3), (1,0), (2,0)])
+print(hx.shape, hz.shape)
+print(hx.sum(axis=1).min(), hx.sum(axis=1).max())
+print(hx.sum(axis=0).min(), hx.sum(axis=0).max())
+print((hx @ hz.T % 2).any())
+cols = np.nonzero(hx[0])[0]
+print([("L" if c < 36 else "R", divmod(int(c) % 36, 6)) for c in cols])
