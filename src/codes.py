@@ -22,3 +22,21 @@ def bb_code(l, m, A_terms, B_terms):
     hx = np.hstack([A, B])
     hz = np.hstack([B.T, A.T])  
     return hx, hz
+
+def gf2_rank(M):
+    M = M.copy() % 2
+    m, n = M.shape
+    rank = 0
+    for col in range(n):
+        pivot_row = None
+        for row in range(rank, m):
+            if M[row, col] == 1:
+                pivot_row = row
+                break
+        if pivot_row is not None:
+            M[[rank, pivot_row]] = M[[pivot_row, rank]]
+            for row in range(rank + 1, m):
+                if M[row, col] == 1:
+                    M[row] ^= M[rank]
+            rank += 1
+    return rank
