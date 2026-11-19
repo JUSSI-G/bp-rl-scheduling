@@ -12,10 +12,10 @@ def test_gf2_rank_small():
 def check_bb(l, m, A, B, n, k):
     hx, hz = bb_code(l, m, A, B)
     assert hx.shape == (n // 2, n)
-    assert (hx.sum(axis=1) == 6).all()        # weight-6 checks
-    assert (hx.sum(axis=0) == 3).all()        # each qubit in 3 X checks
-    assert not (hx @ hz.T % 2).any()          # X and Z checks commute
-    assert gf2_rank(hx) == gf2_rank(hz)       # Bravyi Lemma 1
+    assert (hx.sum(axis=1) == 6).all()       
+    assert (hx.sum(axis=0) == 3).all()        
+    assert not (hx @ hz.T % 2).any()         
+    assert gf2_rank(hx) == gf2_rank(hz)       
     assert n - gf2_rank(hx) - gf2_rank(hz) == k
 
 
