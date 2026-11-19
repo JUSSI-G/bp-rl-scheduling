@@ -12,7 +12,7 @@ print(err.sum(axis=1).mean())
 s = syndromes(hz, err)
 print(s.shape)                   
 
-# hand-made errors:
+
 zero = np.zeros((1, 72), dtype=np.uint8)
 print(syndromes(hz, zero).sum()) 
 one = np.zeros((1, 72), dtype=np.uint8); one[0, 5] = 1

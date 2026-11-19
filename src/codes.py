@@ -40,3 +40,31 @@ def gf2_rank(M):
                     M[row] ^= M[rank]
             rank += 1
     return rank
+
+def gf2_kernel(M):
+    R = M.copy() % 2
+    m, n = R.shape
+    pivots = []
+    rank = 0
+    for col in range(n):
+        pivot_row = None
+        for row in range(rank, m):
+            if R[row, col] == 1:
+                pivot_row = row
+                break
+        if pivot_row is not None:
+            R[[rank, pivot_row]] = R[[pivot_row, rank]]
+            for row in range(m):
+                if row != rank and R[row, col] == 1:
+                    R[row] ^= R[rank]
+            pivots.append(col)
+            rank += 1
+            if rank == m:
+                break
+    free = [c for c in range(n) if c not in pivots]
+    K = np.zeros((len(free), n), dtype=np.uint8)
+    for j, f in enumerate(free):
+        K[j, f] = 1
+        for i, p in enumerate(pivots):
+            K[j, p] = R[i, f]
+    return K
