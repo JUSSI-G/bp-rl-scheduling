@@ -1,0 +1,22 @@
+{
+  "feature_names": [
+    "unsatisfied",
+    "light_on",
+    "uncertainty",
+    "wobbling"
+  ],
+  "weights": [
+    -2.218035425110377,
+    4.221167046264598,
+    -1.1374014340830285,
+    -0.18738900943560852
+  ],
+  "error_rate": 0.05,
+  "training_shots": 3000,
+  "rollouts_per_shot": 4,
+  "learning_rate": 0.15,
+  "iteration_penalty": 0.05,
+  "max_iterations": 20,
+  "training_seed": 123,
+  "policy_seed": 0
+}
