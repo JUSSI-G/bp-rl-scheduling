@@ -1,4 +1,4 @@
-import json
+﻿import json
 import time
 import numpy as np
 from src.codes import bb_code, gf2_kernel
@@ -9,7 +9,7 @@ l, m = 6, 6
 a_terms = [(3, 0), (0, 1), (0, 2)]
 b_terms = [(0, 3), (1, 0), (2, 0)]
 error_rate = 0.05
-training_shots = 3000
+training_shots = 15000
 rollouts_per_shot = 4
 learning_rate = 0.15
 iteration_penalty = 0.05
@@ -45,7 +45,7 @@ for shot in range(1, training_shots + 1):
         weights_text = ", ".join(f"{name}={weight:+.2f}" for name, weight in zip(feature_names, decoder.weights))
         print(f"shot {shot}: {weights_text}  ({time.time() - start_time:.0f}s)")
 
-with open("results/learned_weights.json", "w") as file:
+with open("results/learned_weights_long.json", "w") as file:
     json.dump({"feature_names": feature_names, "weights": decoder.weights.tolist(),
                "error_rate": error_rate, "training_shots": training_shots,
                "rollouts_per_shot": rollouts_per_shot, "learning_rate": learning_rate,

@@ -1,4 +1,4 @@
-import csv
+﻿import csv
 import json
 import time
 import numpy as np
@@ -11,7 +11,7 @@ l, m = 6, 6
 a_terms = [(3, 0), (0, 1), (0, 2)]
 b_terms = [(0, 3), (1, 0), (2, 0)]
 error_rate = 0.05
-number_of_shots = 2000
+number_of_shots = 10000
 max_iterations = 50
 error_seed = 1
 
@@ -19,7 +19,7 @@ hx, hz = bb_code(l, m, a_terms, b_terms)
 logical_test = gf2_kernel(hx)
 errors = sample_errors(hx.shape[1], error_rate, number_of_shots, np.random.default_rng(error_seed))
 all_syndromes = syndromes(hz, errors)
-learned_weights = json.load(open("results/learned_weights.json"))["weights"]
+learned_weights = json.load(open("results/learned_weights_long.json"))["weights"]
 
 
 def evaluate(decode_one_shot):
@@ -44,7 +44,7 @@ schedules = {
 }
 
 all_failed = {}
-with open("results/task_c.csv", "w", newline="") as file:
+with open("results/task_c_long.csv", "w", newline="") as file:
     writer = csv.writer(file)
     writer.writerow(["schedule", "shots", "ler", "standard_error", "non_converged", "wrong",
                      "mean_iterations", "seconds"])
