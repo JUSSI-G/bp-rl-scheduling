@@ -8,9 +8,11 @@ from src.sim import sample_errors, syndromes, failures
 from src.bp import BeliefPropagation
 from src.rl import LearnedScheduleDecoder
 
-codes = {"72": (6, 6), "144": (12, 6)}
-a_terms = [(3, 0), (0, 1), (0, 2)]
-b_terms = [(0, 3), (1, 0), (2, 0)]
+codes = {
+    "72": (6, 6, [(3, 0), (0, 1), (0, 2)], [(0, 3), (1, 0), (2, 0)]),
+    "144": (12, 6, [(3, 0), (0, 1), (0, 2)], [(0, 3), (1, 0), (2, 0)]),
+    "288": (12, 12, [(3, 0), (0, 2), (0, 7)], [(0, 3), (1, 0), (2, 0)]),
+}
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--code", default="144", choices=codes.keys())
@@ -22,7 +24,7 @@ parser.add_argument("--seed", type=int, default=1)
 parser.add_argument("--output", required=True)
 settings = parser.parse_args()
 
-l, m = codes[settings.code]
+l, m, a_terms, b_terms = codes[settings.code]
 hx, hz = bb_code(l, m, a_terms, b_terms)
 logical_test = gf2_kernel(hx)
 

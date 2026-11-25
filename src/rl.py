@@ -1,7 +1,17 @@
 import numpy as np
 from src.bp import check_to_qubit_messages
 
-feature_names = ["unsatisfied", "light_on", "uncertainty", "wobbling"]
+feature_names = ["unsatisfied", "light_on", "uncertainty", "wobbling", "residual"]
+
+
+def all_check_messages(incoming_beliefs, syndrome):
+    tanh_values = np.tanh(incoming_beliefs / 2)
+    products_before = np.concatenate([np.ones((len(tanh_values), 1)), np.cumprod(tanh_values[:, :-1], axis=1)], axis=1)
+    reversed_cumulative = np.cumprod(tanh_values[:, ::-1][:, :-1], axis=1)[:, ::-1]
+    products_after = np.concatenate([reversed_cumulative, np.ones((len(tanh_values), 1))], axis=1)
+    signs = np.where(syndrome == 1, -1.0, 1.0)[:, None]
+    combined = np.clip(signs * products_before * products_after, -0.999999999, 0.999999999)
+    return 2 * np.arctanh(combined)
 
 
 class LearnedScheduleDecoder:
@@ -10,17 +20,23 @@ class LearnedScheduleDecoder:
         self.number_of_checks, self.number_of_qubits = parity_check_matrix.shape
         self.qubits_in_check = np.array([np.nonzero(row)[0] for row in parity_check_matrix])
         self.prior_belief = np.log((1 - error_rate) / error_rate)
-        self.weights = np.array(weights, dtype=float)
+        padded_weights = np.zeros(len(feature_names))
+        padded_weights[:len(weights)] = weights
+        self.weights = padded_weights
         self.max_iterations = max_iterations
 
-    def check_features(self, beliefs, syndrome, guess_at_start_of_iteration):
+    def check_features(self, beliefs, messages, syndrome, guess_at_start_of_iteration):
         guess = (beliefs < 0).astype(np.uint8)
         unsatisfied = (self.parity_check_matrix @ guess % 2) != syndrome
         smallest_confidence = np.abs(beliefs)[self.qubits_in_check].min(axis=1)
         uncertainty = 1 / (1 + smallest_confidence)
         changed_qubits = guess != guess_at_start_of_iteration
         wobbling = changed_qubits[self.qubits_in_check].mean(axis=1)
-        return np.column_stack([unsatisfied, syndrome, uncertainty, wobbling]).astype(float)
+        incoming_beliefs = beliefs[self.qubits_in_check] - messages
+        new_messages = all_check_messages(incoming_beliefs, syndrome)
+        largest_change = np.abs(new_messages - messages).max(axis=1)
+        residual = largest_change / (1 + largest_change)
+        return np.column_stack([unsatisfied, syndrome, uncertainty, wobbling, residual]).astype(float)
 
     def choose_check(self, features, remaining, rng, explore):
         scores = features[remaining] @ self.weights
@@ -42,7 +58,7 @@ class LearnedScheduleDecoder:
             guess_at_start_of_iteration = (beliefs < 0).astype(np.uint8)
             remaining = list(range(self.number_of_checks))
             while remaining:
-                features = self.check_features(beliefs, syndrome, guess_at_start_of_iteration)
+                features = self.check_features(beliefs, messages, syndrome, guess_at_start_of_iteration)
                 check, gradient = self.choose_check(features, np.array(remaining), rng, explore)
                 if gradient is not None:
                     total_gradient += gradient

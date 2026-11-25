@@ -6,9 +6,11 @@ from src.codes import bb_code, gf2_kernel
 from src.sim import sample_errors, syndromes, failures
 from src.rl import LearnedScheduleDecoder, feature_names
 
-codes = {"72": (6, 6), "144": (12, 6)}
-a_terms = [(3, 0), (0, 1), (0, 2)]
-b_terms = [(0, 3), (1, 0), (2, 0)]
+codes = {
+    "72": (6, 6, [(3, 0), (0, 1), (0, 2)], [(0, 3), (1, 0), (2, 0)]),
+    "144": (12, 6, [(3, 0), (0, 1), (0, 2)], [(0, 3), (1, 0), (2, 0)]),
+    "288": (12, 12, [(3, 0), (0, 2), (0, 7)], [(0, 3), (1, 0), (2, 0)]),
+}
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--code", default="72", choices=codes.keys())
@@ -19,14 +21,16 @@ parser.add_argument("--learning-rate", type=float, default=0.15)
 parser.add_argument("--iteration-penalty", type=float, default=0.05)
 parser.add_argument("--max-iterations", type=int, default=20)
 parser.add_argument("--seed", type=int, default=123)
+parser.add_argument("--no-residual", action="store_true")
 parser.add_argument("--output", required=True)
 settings = parser.parse_args()
 
-l, m = codes[settings.code]
+l, m, a_terms, b_terms = codes[settings.code]
 hx, hz = bb_code(l, m, a_terms, b_terms)
 logical_test = gf2_kernel(hx)
 decoder = LearnedScheduleDecoder(hz, settings.error_rate, np.zeros(len(feature_names)),
                                  settings.max_iterations)
+residual_position = feature_names.index("residual")
 error_rng = np.random.default_rng(settings.seed)
 policy_rng = np.random.default_rng(settings.seed + 1)
 
@@ -48,6 +52,8 @@ for shot in range(1, settings.shots + 1):
     advantages = rewards - rewards.mean()
     for advantage, gradient in zip(advantages, gradients):
         decoder.weights += settings.learning_rate * advantage * gradient
+    if settings.no_residual:
+        decoder.weights[residual_position] = 0.0
 
     if shot % report_every == 0:
         weights_text = ", ".join(f"{name}={weight:+.2f}" for name, weight in zip(feature_names, decoder.weights))
