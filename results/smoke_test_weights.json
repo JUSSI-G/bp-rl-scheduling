@@ -1,0 +1,23 @@
+{
+  "feature_names": [
+    "unsatisfied",
+    "light_on",
+    "uncertainty",
+    "wobbling"
+  ],
+  "weights": [
+    0.004570509176966523,
+    0.1997113790070544,
+    0.30886994426778214,
+    0.04654807919857011
+  ],
+  "code": "144",
+  "error_rate": 0.05,
+  "shots": 50,
+  "rollouts": 4,
+  "learning_rate": 0.15,
+  "iteration_penalty": 0.05,
+  "max_iterations": 20,
+  "seed": 123,
+  "output": "results/smoke_test_weights.json"
+}

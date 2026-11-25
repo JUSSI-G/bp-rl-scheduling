@@ -1,0 +1,23 @@
+{
+  "feature_names": [
+    "unsatisfied",
+    "light_on",
+    "uncertainty",
+    "wobbling"
+  ],
+  "weights": [
+    -2.5301202459988046,
+    4.201580937759987,
+    -0.9056426719920326,
+    0.21924920078721605
+  ],
+  "code": "144",
+  "error_rate": 0.06,
+  "shots": 30000,
+  "rollouts": 4,
+  "learning_rate": 0.15,
+  "iteration_penalty": 0.0,
+  "max_iterations": 20,
+  "seed": 123,
+  "output": "results/weights_144_success_only.json"
+}
