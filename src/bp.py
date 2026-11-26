@@ -19,6 +19,7 @@ def check_to_qubit_messages(incoming_beliefs, syndrome_bit):
 
 class BeliefPropagation:
     """Sum-product BP decoder with flooding, serial and random serial schedules."""
+
     def __init__(self, parity_check_matrix, error_rate, max_iterations=50):
         self.parity_check_matrix = parity_check_matrix
         self.number_of_checks, self.number_of_qubits = parity_check_matrix.shape

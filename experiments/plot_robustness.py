@@ -28,7 +28,9 @@ def main():
         by_schedule = {row["schedule"]: row for row in csv.DictReader(file)}
     random_row = by_schedule["random_serial"]
     lers = np.array([float(by_schedule[name]["ler"]) for name, label, color in ENTRIES])
-    errors = np.array([float(by_schedule[name]["standard_error"]) for name, label, color in ENTRIES])
+    errors = np.array(
+        [float(by_schedule[name]["standard_error"]) for name, label, color in ENTRIES]
+    )
     random_ler = float(random_row["ler"])
     random_error = float(random_row["standard_error"])
     positions = np.arange(len(ENTRIES))

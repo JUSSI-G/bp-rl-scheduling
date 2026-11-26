@@ -7,7 +7,9 @@ FEATURE_NAMES = ["unsatisfied", "light_on", "uncertainty", "wobbling", "residual
 def all_check_messages(incoming_beliefs, syndrome):
     """Sum-product messages of every check at once (one check per row)."""
     tanh_values = np.tanh(incoming_beliefs / 2)
-    products_before = np.concatenate([np.ones((len(tanh_values), 1)), np.cumprod(tanh_values[:, :-1], axis=1)], axis=1)
+    products_before = np.concatenate(
+        [np.ones((len(tanh_values), 1)), np.cumprod(tanh_values[:, :-1], axis=1)], axis=1
+    )
     reversed_cumulative = np.cumprod(tanh_values[:, ::-1][:, :-1], axis=1)[:, ::-1]
     products_after = np.concatenate([reversed_cumulative, np.ones((len(tanh_values), 1))], axis=1)
     signs = np.where(syndrome == 1, -1.0, 1.0)[:, None]
@@ -17,13 +19,14 @@ def all_check_messages(incoming_beliefs, syndrome):
 
 class LearnedScheduleDecoder:
     """Serial BP whose next check is picked by a linear softmax policy over check features."""
+
     def __init__(self, parity_check_matrix, error_rate, weights, max_iterations=50):
         self.parity_check_matrix = parity_check_matrix
         self.number_of_checks, self.number_of_qubits = parity_check_matrix.shape
         self.qubits_in_check = np.array([np.nonzero(row)[0] for row in parity_check_matrix])
         self.prior_belief = np.log((1 - error_rate) / error_rate)
         padded_weights = np.zeros(len(FEATURE_NAMES))
-        padded_weights[:len(weights)] = weights
+        padded_weights[: len(weights)] = weights
         self.weights = padded_weights
         self.max_iterations = max_iterations
 
@@ -39,7 +42,9 @@ class LearnedScheduleDecoder:
         new_messages = all_check_messages(incoming_beliefs, syndrome)
         largest_change = np.abs(new_messages - messages).max(axis=1)
         residual = largest_change / (1 + largest_change)
-        return np.column_stack([unsatisfied, syndrome, uncertainty, wobbling, residual]).astype(float)
+        return np.column_stack([unsatisfied, syndrome, uncertainty, wobbling, residual]).astype(
+            float
+        )
 
     def choose_check(self, features, remaining, rng, explore):
         """Pick the next check; when exploring, also return the log-policy gradient."""
@@ -63,7 +68,9 @@ class LearnedScheduleDecoder:
             guess_at_start_of_iteration = (beliefs < 0).astype(np.uint8)
             remaining = list(range(self.number_of_checks))
             while remaining:
-                features = self.check_features(beliefs, messages, syndrome, guess_at_start_of_iteration)
+                features = self.check_features(
+                    beliefs, messages, syndrome, guess_at_start_of_iteration
+                )
                 check, gradient = self.choose_check(features, np.array(remaining), rng, explore)
                 if gradient is not None:
                     total_gradient += gradient

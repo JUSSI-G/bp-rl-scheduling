@@ -10,7 +10,9 @@ from src.vertical_bp import VerticalBeliefPropagation
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Train the RL-S tabular Q-learning qubit schedule.")
+    parser = argparse.ArgumentParser(
+        description="Train the RL-S tabular Q-learning qubit schedule."
+    )
     parser.add_argument("--code", default="72")
     parser.add_argument(
         "--error-rates", type=float, nargs="+", default=[0.03, 0.04, 0.05, 0.06, 0.07]

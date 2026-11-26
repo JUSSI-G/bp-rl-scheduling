@@ -81,14 +81,18 @@ def main():
                 )
                 file.flush()
                 print(
-                    f"p={error_rate:.2f} {name:15s} LER={failed.mean():.4f} +- {standard_error:.4f}  "
+                    f"p={error_rate:.2f} {name:15s} "
+                    f"LER={failed.mean():.4f} +- {standard_error:.4f}  "
                     f"non-converged={(~converged).sum():4d}  "
                     f"wrong={(failed & converged).sum():4d}  "
                     f"iterations={iterations[converged].mean():.2f}  ({seconds:.0f}s)"
                 )
             rescued = (all_failed["random_serial"] & ~all_failed["learned_on_72"]).sum()
             lost = (all_failed["learned_on_72"] & ~all_failed["random_serial"]).sum()
-            print(f"p={error_rate:.2f} learned_on_72 vs random_serial: rescues {rescued}, loses {lost}")
+            print(
+                f"p={error_rate:.2f} learned_on_72 vs random_serial: "
+                f"rescues {rescued}, loses {lost}"
+            )
             print()
 
 

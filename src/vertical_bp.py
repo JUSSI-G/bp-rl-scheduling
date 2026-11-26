@@ -11,15 +11,21 @@ def tanh_product_message(other_messages, syndrome_bit):
 
 class VerticalBeliefPropagation:
     """Qubit-by-qubit (vertical) serial BP, the decoder used by RL-S."""
+
     def __init__(self, parity_check_matrix, error_rate, max_iterations=50):
         self.parity_check_matrix = parity_check_matrix
         self.number_of_checks, self.number_of_qubits = parity_check_matrix.shape
         self.qubits_in_check = np.array([np.nonzero(row)[0] for row in parity_check_matrix])
         self.checks_of_qubit = np.array([np.nonzero(column)[0] for column in parity_check_matrix.T])
-        self.position_in_check = np.array([
-            [list(self.qubits_in_check[check]).index(qubit) for check in self.checks_of_qubit[qubit]]
-            for qubit in range(self.number_of_qubits)
-        ])
+        self.position_in_check = np.array(
+            [
+                [
+                    list(self.qubits_in_check[check]).index(qubit)
+                    for check in self.checks_of_qubit[qubit]
+                ]
+                for qubit in range(self.number_of_qubits)
+            ]
+        )
         self.prior_belief = np.log((1 - error_rate) / error_rate)
         self.max_iterations = max_iterations
 
@@ -77,6 +83,7 @@ def random_order(decoder, remaining, iteration, step, rng):
 
 class GreedyQTablePolicy:
     """Pick the remaining qubit with the largest Q-value for its current state."""
+
     def __init__(self, q_table):
         self.q_table = q_table
 
