@@ -1,0 +1,26 @@
+{
+  "feature_names": [
+    "unsatisfied",
+    "light_on",
+    "uncertainty",
+    "wobbling",
+    "residual"
+  ],
+  "weights": [
+    -1.0844734127499087,
+    -0.37836155905684227,
+    -3.40736260187579,
+    1.0421432619445745,
+    3.398187841615271
+  ],
+  "code": "72",
+  "error_rate": 0.05,
+  "shots": 15000,
+  "rollouts": 4,
+  "learning_rate": 0.15,
+  "iteration_penalty": 0.05,
+  "max_iterations": 20,
+  "seed": 1,
+  "no_residual": false,
+  "output": "results/weights_72_residual_s1.json"
+}
