@@ -1,0 +1,14 @@
+shot 300: unsatisfied=-0.90, light_on=-0.76, uncertainty=-0.20, wobbling=+0.19, residual=+0.00  (17s)
+shot 600: unsatisfied=-1.15, light_on=-0.28, uncertainty=+0.13, wobbling=+0.24, residual=+0.00  (35s)
+shot 900: unsatisfied=-1.85, light_on=-0.47, uncertainty=-0.34, wobbling=+0.10, residual=+0.00  (55s)
+shot 1200: unsatisfied=-1.34, light_on=+0.88, uncertainty=-0.40, wobbling=+0.19, residual=+0.00  (72s)
+shot 1500: unsatisfied=-0.55, light_on=+1.01, uncertainty=+0.32, wobbling=+0.26, residual=+0.00  (91s)
+shot 1800: unsatisfied=+0.47, light_on=+1.46, uncertainty=-0.22, wobbling=+0.14, residual=+0.00  (109s)
+shot 2100: unsatisfied=+0.28, light_on=+1.46, uncertainty=+0.28, wobbling=+0.13, residual=+0.00  (140s)
+shot 2400: unsatisfied=-0.52, light_on=+0.97, uncertainty=+0.01, wobbling=+0.04, residual=+0.00  (190s)
+shot 2700: unsatisfied=-1.07, light_on=+0.41, uncertainty=-0.40, wobbling=+0.01, residual=+0.00  (236s)
+shot 3000: unsatisfied=-0.60, light_on=+0.26, uncertainty=+0.04, wobbling=-0.01, residual=+0.00  (273s)
+[[72]]: 1535 shots, 1023 failing rollouts, 125 shots where rollouts disagree on success
+[[144]]: 1465 shots, 321 failing rollouts, 38 shots where rollouts disagree on success
+final weights: unsatisfied=-0.5959, light_on=+0.2579, uncertainty=+0.0431, wobbling=-0.0147, residual=+0.0000
+saved results/learned_weights_mixture_seed2.json
