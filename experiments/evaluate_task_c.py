@@ -54,7 +54,7 @@ with open("results/task_c_long.csv", "w", newline="") as file:
         standard_error = np.sqrt(failed.mean() * (1 - failed.mean()) / number_of_shots)
         writer.writerow([name, number_of_shots, failed.mean(), standard_error, (~converged).sum(),
                          (failed & converged).sum(), iterations[converged].mean(), seconds])
-        print(f"{name:24s} LER={failed.mean():.4f} ± {standard_error:.4f}  "
+        print(f"{name:24s} LER={failed.mean():.4f} +- {standard_error:.4f}  "
               f"non-converged={(~converged).sum():3d}  wrong={(failed & converged).sum():3d}  "
               f"iterations={iterations[converged].mean():.2f}  ({seconds:.0f}s)")
 
