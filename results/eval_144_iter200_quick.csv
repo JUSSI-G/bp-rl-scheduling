@@ -1,2 +1,0 @@
-code,error_rate,schedule,shots,max_iterations,ler,standard_error,non_converged,wrong,mean_iterations,rescued_vs_random,lost_vs_random,seconds
-144,0.05,flooding,5000,200,0.0592,0.0033375248313683003,256,40,6.606028667790894,,,73.37337040901184
