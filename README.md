@@ -4,10 +4,10 @@ Belief propagation (BP) is the standard fast decoder for quantum LDPC codes, but
 codes it often fails to converge. In *serial* BP the checks are updated one at a time, and
 the order of the updates changes the outcome. This project asks whether a reinforcement
 learning (RL) agent can learn a better order. I implemented flooding, serial and random-serial
-sum-product BP from scratch (checked shot for shot against the `ldpc` package), showed that
+sum-product BP from scratch (checked shot for shot against the `ldpc` package [8]), showed that
 the update order decides the outcome of about one shot in eight, and trained a linear
 REINFORCE policy that picks the next check from five simple features. I also reproduced a
-tabular Q-learning scheduler (RL-S). **Main finding:** on the [[72,12,6]] code it was trained
+tabular Q-learning scheduler (RL-S [3]). **Main finding:** on the [[72,12,6]] code it was trained
 on, the learned policy is no better than a random serial order: it trades stuck shots for
 wrong answers. Applied unchanged to larger codes, though, the same policy gives 10–15% fewer
 failures on [[144,12,12]] and up to 26% fewer on [[288,12,18]].
@@ -28,7 +28,7 @@ have short cycles, so the messages reinforce their own errors and BP can oscilla
 In flooding BP all checks update at once. In serial BP each check uses the newest messages
 immediately, which cuts the iterations needed by about 40% here. Which check goes first is a free
 choice, and on graphs with short cycles it changes the result. That makes the order a
-natural target for learning [3–6].
+natural target for dynamic scheduling [7] and for learning [3–6].
 
 ## Methods
 
@@ -50,14 +50,17 @@ natural target for learning [3–6].
   - `light_on`: its syndrome bit;
   - `uncertainty`: 1 / (1 + the smallest |LLR| among its qubits);
   - `wobbling`: the fraction of its qubits whose hard decision flipped this iteration;
-  - `residual`: how much its messages would change if it were updated now.
+  - `residual`: how much its messages would change if it were updated now, the quantity
+    used in informed dynamic scheduling [7].
 - **Training:** REINFORCE with 4 rollouts per syndrome and the mean reward of those
   rollouts as the baseline. Reward = success − 0.05 × iterations, at most 20 iterations,
   15 000 training syndromes on [[72,12,6]] at p = 0.05.
 - **RL-S reproduction:** qubit-by-qubit ("vertical") serial BP. A qubit's state is the
   unsatisfied pattern of its 3 checks (8 states). A tabular Q(state, qubit) is learned by
   ε-greedy Q-learning: the reward is the drop in unsatisfied checks, plus 1 on success.
-  Training uses 20 000 episodes at p ∈ {0.03, …, 0.07}.
+  Training uses 20 000 episodes at p ∈ {0.03, …, 0.07}. RL-S was introduced in
+  arXiv:2603.10192; my implementation follows the description in arXiv:2607.20130 and
+  arXiv:2607.24891 [3–5].
 
 ## Results
 
@@ -81,10 +84,13 @@ and the reverse (b), on identical errors.
 ![Task C: how decoding fails](figures/task_c.png)
 
 On [[72,12,6]] the learned schedules change *how* BP fails, not *how often*. The agent
-rescues stuck shots, but about as many of them converge to a wrong logical class. On larger
-codes logical failures are rarer and almost every failure is a stuck shot, so a policy that
-un-sticks BP pays off. This is the likely reason the policy transfers well despite not
-helping where it was trained.
+rescues stuck shots, but about as many of them converge to a wrong logical class. On
+[[72,12,6]] only 32% of random-serial failures are stuck shots (497 of 1 574). On
+[[144,12,12]] (p = 0.05, 200 iterations) it is 79% (721 of 916), and on [[288,12,18]]
+(p = 0.06, 200 iterations) 99% (579 of 583). The agent still trades stuck shots for wrong
+answers there (144: 721 → 479 stuck, 195 → 301 wrong; 288: 579 → 412 stuck, 4 → 17 wrong),
+but because stuck shots dominate, the trade now reduces the total. This is the likely
+reason the policy transfers well despite not helping where it was trained.
 
 ![Robustness across training seeds](figures/robustness.png)
 
@@ -93,10 +99,13 @@ Figures for Tasks A and B: [`figures/task_a.png`](figures/task_a.png),
 
 ## Limitations
 
-- **Code-capacity noise only:** no measurement errors and no circuit-level noise.
+- **Code-capacity noise only:** no measurement errors, no correlated errors [2] and no
+  circuit-level noise.
 - **A linear policy over five hand-made features:** the features are recomputed for every
-  check after every update, so decoding with the agent is 3–10× slower than plain serial BP
-  in this Python implementation.
+  check after every update, so decoding with the agent is 3–10× slower than random serial BP
+  in this Python implementation. From the `seconds` columns: 2.9× in `task_c_long.csv`
+  (45 s vs 16 s), 5.9× in `night2_144.csv` (949 s vs 160 s), and 9.7× in `night2_288.csv`
+  at p = 0.06 (1 174 s vs 121 s).
 - **Finite shots:** the standard errors are about 0.0036 at 10 000 shots on [[72,12,6]],
   0.0014 at 20 000 shots on [[144,12,12]] and 0.002 at 10 000 shots on [[288,12,18]].
   Differences between schedules are judged with the paired rescued/lost counts on identical
@@ -176,15 +185,22 @@ longest is about 3 hours).
 1. S. Bravyi, A. W. Cross, J. M. Gambetta, D. Maslov, P. Rall, T. J. Yoder, "High-threshold
    and low-overhead fault-tolerant quantum memory", Nature 627, 778–782 (2024),
    arXiv:2308.07915.
-2. J. Roffe, D. R. White, S. Burton, E. Campbell, "Decoding across the quantum low-density
-   parity-check code landscape", Phys. Rev. Research 2, 043423 (2020); `ldpc` package,
-   https://github.com/quantumgizmos/ldpc.
-3. Moradi et al., TODO: title, arXiv:2607.20130.
-4. Moradi et al., TODO: title, arXiv:2607.24891.
-5. Maan, Garcia Herrero, Paler, Savin, TODO: title, Nature Communications (2026).
-6. Huang, Ueng, TODO: title, Quantum 10, 1967 (2026).
-
-TODO: confirm which of [3–6] introduces RL-S and cite it in the Methods section.
+2. A. S. Maan, F. M. Garcia Herrero, A. Paler, V. Savin, "Decoding correlated errors in
+   quantum LDPC codes", Nature Communications 17, 3965 (2026). doi:10.1038/s41467-026-70556-3
+3. M. Moradi, V. Nourozi, S. Habib, D. G. M. Mitchell, "Learning to decode quantum LDPC
+   codes via belief propagation", arXiv:2603.10192 (2026). Introduces RL-S.
+4. M. Moradi, T. Kim, R. A. Chou, D. G. M. Mitchell, "Learning to decode quantum LDPC codes
+   via cluster-based sequential belief propagation", arXiv:2607.20130 (2026). The RL-S
+   state, reward and Q-learning update used here follow Sec. III, Eqs. 11–13 and
+   Algs. 1–2.
+5. M. Moradi, V. Nourozi, T. Kim, R. A. Chou, D. G. M. Mitchell, "High-performance
+   reinforcement-learned BP decoding of quantum LDPC codes", arXiv:2607.24891 (2026).
+6. M. Moradi, T. Kim, R. A. Chou, "Conflict-free color-clustered sequential
+   belief-propagation decoding of quantum LDPC codes via reinforcement learning",
+   arXiv:2609.20236 (2026).
+7. T.-H. Huang, Y.-L. Ueng, "Informed dynamic scheduling for QLDPC codes", Quantum 10, 1967
+   (2026).
+8. J. Roffe, "LDPC: Python tools for low density parity check codes" (2022).
 
 ## License
 
