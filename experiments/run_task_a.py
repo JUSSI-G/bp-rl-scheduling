@@ -1,56 +1,94 @@
+import argparse
 import csv
 import time
+
 import numpy as np
-from src.codes import bb_code, gf2_kernel
-from src.sim import sample_errors, syndromes, failures
+
 from src.bp import BeliefPropagation
+from src.codes import build_code
+from src.sim import failures, sample_errors, syndromes
 
-codes = {
-    "72_12_6": (6, 6),
-    "144_12_12": (12, 6),
-}
-a_terms = [(3, 0), (0, 1), (0, 2)]
-b_terms = [(0, 3), (1, 0), (2, 0)]
-error_rates = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.08]
-schedules = ["flooding", "serial", "random_serial"]
-number_of_shots = 2000
-max_iterations = 50
-error_seed = 1
-schedule_seed = 7
+CSV_CODE_NAMES = {"72": "72_12_6", "144": "144_12_12", "288": "288_12_18"}
+SCHEDULES = ["flooding", "serial", "random_serial"]
 
-output_file = "results/task_a.csv"
-columns = ["code", "error_rate", "schedule", "shots", "failures", "non_converged",
-           "wrong", "ler", "mean_iterations", "max_iterations", "error_seed", "schedule_seed"]
 
-with open(output_file, "w", newline="") as file:
-    writer = csv.writer(file)
-    writer.writerow(columns)
+def main():
+    parser = argparse.ArgumentParser(description="Task A: flooding vs serial vs random serial BP.")
+    parser.add_argument("--codes", nargs="+", default=["72", "144"], choices=CSV_CODE_NAMES.keys())
+    parser.add_argument(
+        "--error-rates",
+        type=float,
+        nargs="+",
+        default=[0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.08],
+    )
+    parser.add_argument("--shots", type=int, default=2000)
+    parser.add_argument("--max-iterations", type=int, default=50)
+    parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--schedule-seed", type=int, default=7)
+    parser.add_argument("--output", default="results/task_a.csv")
+    settings = parser.parse_args()
 
-    for code_name, (l, m) in codes.items():
-        hx, hz = bb_code(l, m, a_terms, b_terms)
-        number_of_qubits = hx.shape[1]
-        logical_test = gf2_kernel(hx)
+    columns = [
+        "code",
+        "error_rate",
+        "schedule",
+        "shots",
+        "failures",
+        "non_converged",
+        "wrong",
+        "ler",
+        "mean_iterations",
+        "max_iterations",
+        "error_seed",
+        "schedule_seed",
+    ]
+    with open(settings.output, "w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(columns)
 
-        for error_rate in error_rates:
-            error_rng = np.random.default_rng(error_seed)
-            errors = sample_errors(number_of_qubits, error_rate, number_of_shots, error_rng)
-            all_syndromes = syndromes(hz, errors)
+        for code in settings.codes:
+            code_name = CSV_CODE_NAMES[code]
+            hx, hz, logical_test = build_code(code)
+            number_of_qubits = hx.shape[1]
 
-            for schedule in schedules:
-                decoder = BeliefPropagation(hz, error_rate, max_iterations)
-                schedule_rng = np.random.default_rng(schedule_seed)
-                start_time = time.time()
-                results = [decoder.decode(s, schedule, schedule_rng) for s in all_syndromes]
-                guesses = np.array([guess for guess, converged, iterations in results], dtype=np.uint8)
-                converged = np.array([converged for guess, converged, iterations in results])
-                iterations = np.array([iterations for guess, converged, iterations in results])
-                failed = failures(hz, logical_test, errors, guesses)
+            for error_rate in settings.error_rates:
+                error_rng = np.random.default_rng(settings.seed)
+                errors = sample_errors(number_of_qubits, error_rate, settings.shots, error_rng)
+                all_syndromes = syndromes(hz, errors)
 
-                writer.writerow([code_name, error_rate, schedule, number_of_shots, failed.sum(),
-                                 (~converged).sum(), (failed & converged).sum(), failed.mean(),
-                                 iterations[converged].mean(), max_iterations,
-                                 error_seed, schedule_seed])
-                file.flush()
-                print(f"{code_name:10s} p={error_rate:.2f} {schedule:14s} "
-                      f"LER={failed.mean():.4f} iterations={iterations[converged].mean():.2f} "
-                      f"({time.time() - start_time:.0f}s)")
+                for schedule in SCHEDULES:
+                    decoder = BeliefPropagation(hz, error_rate, settings.max_iterations)
+                    schedule_rng = np.random.default_rng(settings.schedule_seed)
+                    start_time = time.time()
+                    results = [decoder.decode(s, schedule, schedule_rng) for s in all_syndromes]
+                    guesses = np.array([result[0] for result in results], dtype=np.uint8)
+                    converged = np.array([result[1] for result in results])
+                    iterations = np.array([result[2] for result in results])
+                    failed = failures(hz, logical_test, errors, guesses)
+
+                    writer.writerow(
+                        [
+                            code_name,
+                            error_rate,
+                            schedule,
+                            settings.shots,
+                            failed.sum(),
+                            (~converged).sum(),
+                            (failed & converged).sum(),
+                            failed.mean(),
+                            iterations[converged].mean(),
+                            settings.max_iterations,
+                            settings.seed,
+                            settings.schedule_seed,
+                        ]
+                    )
+                    file.flush()
+                    print(
+                        f"{code_name:10s} p={error_rate:.2f} {schedule:14s} "
+                        f"LER={failed.mean():.4f} iterations={iterations[converged].mean():.2f} "
+                        f"({time.time() - start_time:.0f}s)"
+                    )
+
+
+if __name__ == "__main__":
+    main()

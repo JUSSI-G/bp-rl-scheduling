@@ -2,6 +2,7 @@ import numpy as np
 
 
 def tanh_product_message(other_messages, syndrome_bit):
+    """Sum-product message from a check to one qubit."""
     sign = -1.0 if syndrome_bit == 1 else 1.0
     combined = sign * np.prod(np.tanh(other_messages / 2))
     combined = np.clip(combined, -0.999999999, 0.999999999)
@@ -9,6 +10,7 @@ def tanh_product_message(other_messages, syndrome_bit):
 
 
 class VerticalBeliefPropagation:
+    """Qubit-by-qubit (vertical) serial BP, the decoder used by RL-S."""
     def __init__(self, parity_check_matrix, error_rate, max_iterations=50):
         self.parity_check_matrix = parity_check_matrix
         self.number_of_checks, self.number_of_qubits = parity_check_matrix.shape
@@ -22,12 +24,14 @@ class VerticalBeliefPropagation:
         self.max_iterations = max_iterations
 
     def start(self, syndrome):
+        """Reset the decoder for a new syndrome."""
         self.syndrome = syndrome
         self.qubit_to_check = np.full(self.qubits_in_check.shape, self.prior_belief)
         self.guess = np.zeros(self.number_of_qubits, dtype=np.uint8)
         self.unsatisfied = syndrome.astype(bool).copy()
 
     def update_qubit(self, qubit):
+        """Update one qubit and its messages to all its checks."""
         checks = self.checks_of_qubit[qubit]
         positions = self.position_in_check[qubit]
         check_to_qubit = np.empty(len(checks))
@@ -42,10 +46,12 @@ class VerticalBeliefPropagation:
             self.unsatisfied[checks] = ~self.unsatisfied[checks]
 
     def qubit_states(self):
+        """State of every qubit: the unsatisfied pattern of its checks as an integer."""
         bit_values = 2 ** np.arange(self.checks_of_qubit.shape[1])
         return (self.unsatisfied[self.checks_of_qubit] * bit_values).sum(axis=1)
 
     def decode(self, syndrome, choose_qubit, rng):
+        """Return the guess, whether BP converged, and the number of iterations."""
         self.start(syndrome)
         for iteration in range(1, self.max_iterations + 1):
             remaining = np.ones(self.number_of_qubits, dtype=bool)
@@ -60,14 +66,17 @@ class VerticalBeliefPropagation:
 
 
 def fixed_order(decoder, remaining, iteration, step, rng):
+    """Pick the remaining qubit with the lowest index."""
     return np.flatnonzero(remaining)[0]
 
 
 def random_order(decoder, remaining, iteration, step, rng):
+    """Pick a uniformly random remaining qubit."""
     return rng.choice(np.flatnonzero(remaining))
 
 
 class GreedyQTablePolicy:
+    """Pick the remaining qubit with the largest Q-value for its current state."""
     def __init__(self, q_table):
         self.q_table = q_table
 

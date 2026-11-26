@@ -1,35 +1,57 @@
+import argparse
 import time
+
 import numpy as np
 from ldpc import BpDecoder
-from src.codes import bb_code, gf2_kernel
-from src.sim import sample_errors, syndromes, failures
+
 from src.bp import BeliefPropagation
+from src.codes import build_code
+from src.sim import failures, sample_errors, syndromes
 
-hx, hz = bb_code(6, 6, [(3,0),(0,1),(0,2)], [(0,3),(1,0),(2,0)])
-logical_test = gf2_kernel(hx)
-error_rate = 0.05
-number_of_shots = 2000
 
-error_rng = np.random.default_rng(1)
-errors = sample_errors(72, error_rate, number_of_shots, error_rng)
-all_syndromes = syndromes(hz, errors)
+def main():
+    parser = argparse.ArgumentParser(description="Check the own BP against ldpc's BpDecoder.")
+    parser.add_argument("--code", default="72")
+    parser.add_argument("--error-rate", type=float, default=0.05)
+    parser.add_argument("--shots", type=int, default=2000)
+    parser.add_argument("--max-iterations", type=int, default=50)
+    parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--schedule-seed", type=int, default=7)
+    settings = parser.parse_args()
 
-library_decoder = BpDecoder(hz, error_rate=error_rate, max_iter=50,
-                            bp_method="product_sum", schedule="parallel")
-library_guesses = np.array([library_decoder.decode(s) for s in all_syndromes], dtype=np.uint8)
-library_ler = failures(hz, logical_test, errors, library_guesses).mean()
-print(f"ldpc flooding    LER={library_ler:.4f}")
+    error_rate = settings.error_rate
+    hx, hz, logical_test = build_code(settings.code)
+    error_rng = np.random.default_rng(settings.seed)
+    errors = sample_errors(hx.shape[1], error_rate, settings.shots, error_rng)
+    all_syndromes = syndromes(hz, errors)
 
-for schedule in ["flooding", "serial", "random_serial"]:
-    decoder = BeliefPropagation(hz, error_rate)
-    schedule_rng = np.random.default_rng(7)
-    start_time = time.time()
-    results = [decoder.decode(s, schedule, schedule_rng) for s in all_syndromes]
-    guesses = np.array([guess for guess, converged, iterations in results], dtype=np.uint8)
-    converged = np.array([converged for guess, converged, iterations in results])
-    iterations = np.array([iterations for guess, converged, iterations in results])
-    failed = failures(hz, logical_test, errors, guesses)
-    print(f"{schedule:15s}  LER={failed.mean():.4f}  "
-          f"non-converged={(~converged).sum()}  wrong={(failed & converged).sum()}  "
-          f"mean iterations={iterations[converged].mean():.2f}  "
-          f"time={time.time() - start_time:.1f}s")
+    library_decoder = BpDecoder(
+        hz,
+        error_rate=error_rate,
+        max_iter=settings.max_iterations,
+        bp_method="product_sum",
+        schedule="parallel",
+    )
+    library_guesses = np.array([library_decoder.decode(s) for s in all_syndromes], dtype=np.uint8)
+    library_ler = failures(hz, logical_test, errors, library_guesses).mean()
+    print(f"ldpc flooding    LER={library_ler:.4f}")
+
+    for schedule in ["flooding", "serial", "random_serial"]:
+        decoder = BeliefPropagation(hz, error_rate, settings.max_iterations)
+        schedule_rng = np.random.default_rng(settings.schedule_seed)
+        start_time = time.time()
+        results = [decoder.decode(s, schedule, schedule_rng) for s in all_syndromes]
+        guesses = np.array([result[0] for result in results], dtype=np.uint8)
+        converged = np.array([result[1] for result in results])
+        iterations = np.array([result[2] for result in results])
+        failed = failures(hz, logical_test, errors, guesses)
+        print(
+            f"{schedule:15s}  LER={failed.mean():.4f}  "
+            f"non-converged={(~converged).sum()}  wrong={(failed & converged).sum()}  "
+            f"mean iterations={iterations[converged].mean():.2f}  "
+            f"time={time.time() - start_time:.1f}s"
+        )
+
+
+if __name__ == "__main__":
+    main()
