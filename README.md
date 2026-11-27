@@ -80,12 +80,12 @@ and the reverse (b), on identical errors.
 | **B.** Does order matter? | [[72,12,6]], p = 0.05, 1 000 shots, 20 random orders | One random order: mean LER 0.152 (range 0.140–0.162). Best of the 20 orders per shot: 0.087. The outcome of 126 of 1 000 shots depends on the order |
 | **C.** Learned agent on its training code | [[72,12,6]], p = 0.05, 10 000 shots | Random serial 0.1574 ± 0.0036, learned 0.1569 ± 0.0036 (+271/−266). Stuck shots 497 → 343, wrong answers 1 077 → 1 226 |
 | **C.** RL-S reproduction | same | RL-S 0.1559 ± 0.0036; it does not beat its own qubit random-serial baseline (0.1554 ± 0.0036) |
-| **Transfer** to [[144,12,12]] | p = 0.04 / 0.05 / 0.06, 20 000 shots | 0.0127 → 0.0110 (−13%, +78/−44); 0.0478 → 0.0424 (−11%, +187/−79); 0.1261 → 0.1129 (−10%, +350/−86) |
+| **E.** Transfer to [[144,12,12]] | p = 0.04 / 0.05 / 0.06, 20 000 shots | 0.0127 → 0.0110 (−13%, +78/−44); 0.0478 → 0.0424 (−11%, +187/−79); 0.1261 → 0.1129 (−10%, +350/−86) |
 | | p = 0.05, 200 iterations | 0.0458 → 0.0390 (−15%, +201/−65) |
-| **Transfer** to [[288,12,18]] | p = 0.05, 10 000 shots | 0.0130 → 0.0129: **no gain** (+36/−35) |
+| **E.** Transfer to [[288,12,18]] | p = 0.05, 10 000 shots | 0.0130 → 0.0129: **no gain** (+36/−35) |
 | | p = 0.06 | 0.0634 → 0.0539 (−15%, +148/−53) |
 | | p = 0.06, 200 iterations | 0.0583 → 0.0429 (**−26%**, +165/−11) |
-| **Robustness** | trained on [[72,12,6]] with other seeds, evaluated on [[144,12,12]], p = 0.05, 200 iterations, 20 000 shots | 4 of 5 training runs improve on random serial (one is a 60k-shot rerun of seed 123). With the residual feature, 2 of 3 runs do. Every working run has negative weights on both `uncertainty` and `unsatisfied` |
+| **E.** Robustness | trained on [[72,12,6]] with other seeds, evaluated on [[144,12,12]], p = 0.05, 200 iterations, 20 000 shots | 4 of 5 training runs improve on random serial (one is a 60k-shot rerun of seed 123). With the residual feature, 2 of 3 runs do. Every working run has negative weights on both `uncertainty` and `unsatisfied` |
 | **D.** Mixture of Tanner graphs | [[144,12,12]], p = 0.05, 200 iterations, 20 000 shots | Random serial 0.0458. Mixture seeds 123 / 1 / 2: 0.0413 / 0.0418 / 0.0447 (−9.8% / −8.7% / −2.4%). Same-budget 72-only control: 0.0413 (−9.7%) |
 | | [[288,12,18]], p = 0.06, 200 iterations, 10 000 shots | Random serial 0.0583. Mixture seeds: 0.0469 / 0.0484 / 0.0562 (−19.6% / −17.0% / −3.6%). Control: 0.0493 (−15.4%) |
 
