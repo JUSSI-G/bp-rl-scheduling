@@ -104,6 +104,33 @@ Figures:
 the plot scripts look rows up by that exact string. Pass the paths exactly as above
 (`results/<file>.json`, forward slashes).
 
+## 6. Task D: mixture of Tanner graphs
+
+Training (3 000 shots, half [[72,12,6]] and half [[144,12,12]], p = 0.05). The code choice,
+errors and policy use streams spawned from `SeedSequence(seed)`, so no training stream
+equals the evaluation error stream `default_rng(1)`.
+
+| Command | Output | Time |
+|---|---|---|
+| `python -m experiments.train_rl_mixture --seed 123 > results/log_train_mixture_seed123.txt` | `learned_weights_mixture_seed123.json` | 3–4.5 min |
+| same with `--seed 1` / `--seed 2` | `learned_weights_mixture_seed1.json`, `_seed2.json` | 3–4.5 min each |
+
+Evaluation. The control is the existing 3 000-shot 72-only agent `learned_weights.json`:
+
+| Command | Output | Time |
+|---|---|---|
+| `python -m experiments.evaluate_agent --code 144 --error-rates 0.05 --shots 20000 --max-iterations 200 --weights results/learned_weights_mixture_seed123.json results/learned_weights_mixture_seed1.json results/learned_weights_mixture_seed2.json results/learned_weights.json --output task_d_144.csv` | `task_d_144.csv` | about 75 min |
+| `python -m experiments.evaluate_agent --code 288 --error-rates 0.06 --shots 10000 --max-iterations 200 --weights results/learned_weights_mixture_seed123.json results/learned_weights_mixture_seed1.json results/learned_weights_mixture_seed2.json results/learned_weights.json --output task_d_288.csv` | `task_d_288.csv` | about 2.4 h |
+| `{ cat task_d_144.csv; tail -n +2 task_d_288.csv; } > results/task_d_mixture.csv` | `results/task_d_mixture.csv` | |
+| `python -m experiments.plot_task_d` | `figures/task_d_mixture.png`, `figures/task_d_mixture_dark.png` | 3 s |
+
+For the stored file, each agent was instead run as its own `evaluate_agent` process, all 8
+in parallel (70 min of wall time), and the identical baseline rows were kept once. Every
+agent row uses per-shot generators, so it does not depend on which other agents share the
+run: the two commands above give the same rows apart from `seconds`. The flooding, serial
+and random-serial rows are identical to those in `night2_144.csv` and
+`night2_288_iter200.csv`. The analysis is in `results/task_d_summary.md`.
+
 ## Superseded runs (kept for completeness, not used in figures)
 
 | File | Command | Superseded by |

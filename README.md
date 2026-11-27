@@ -10,7 +10,9 @@ REINFORCE policy that picks the next check from five simple features. I also rep
 tabular Q-learning scheduler (RL-S [3]). **Main finding:** on the [[72,12,6]] code it was trained
 on, the learned policy is no better than a random serial order: it trades stuck shots for
 wrong answers. Applied unchanged to larger codes, though, the same policy gives 10–15% fewer
-failures on [[144,12,12]] and up to 26% fewer on [[288,12,18]].
+failures on [[144,12,12]] and up to 26% fewer on [[288,12,18]]. Training on a mixture of
+the [[72,12,6]] and [[144,12,12]] Tanner graphs (Task D) beats random serial for 2 of 3
+seeds, but is no better than training on [[72,12,6]] alone with the same budget.
 
 *Course project for Practical Quantum Computing 2026, topic 2: optimal serial schedules for
 BP decoding using reinforcement learning. Author: Jussi Grönroos.*
@@ -55,6 +57,10 @@ natural target for dynamic scheduling [7] and for learning [3–6].
 - **Training:** REINFORCE with 4 rollouts per syndrome and the mean reward of those
   rollouts as the baseline. Reward = success − 0.05 × iterations, at most 20 iterations,
   15 000 training syndromes on [[72,12,6]] at p = 0.05.
+- **Mixture of Tanner graphs (Task D):** the same training with 3 000 syndromes, each
+  drawn from [[72,12,6]] or [[144,12,12]] with probability 1/2. One weight vector is shared
+  by both codes, which works because the features do not depend on the code. Training seeds
+  are 123, 1 and 2. The control is the 3 000-shot agent trained on [[72,12,6]] only.
 - **RL-S reproduction:** qubit-by-qubit ("vertical") serial BP. A qubit's state is the
   unsatisfied pattern of its 3 checks (8 states). A tabular Q(state, qubit) is learned by
   ε-greedy Q-learning: the reward is the drop in unsatisfied checks, plus 1 on success.
@@ -80,6 +86,8 @@ and the reverse (b), on identical errors.
 | | p = 0.06 | 0.0634 → 0.0539 (−15%, +148/−53) |
 | | p = 0.06, 200 iterations | 0.0583 → 0.0429 (**−26%**, +165/−11) |
 | **Robustness** | trained on [[72,12,6]] with other seeds, evaluated on [[144,12,12]], p = 0.05, 200 iterations, 20 000 shots | 4 of 5 training runs improve on random serial (one is a 60k-shot rerun of seed 123). With the residual feature, 2 of 3 runs do. Every working run has negative weights on both `uncertainty` and `unsatisfied` |
+| **D.** Mixture of Tanner graphs | [[144,12,12]], p = 0.05, 200 iterations, 20 000 shots | Random serial 0.0458. Mixture seeds 123 / 1 / 2: 0.0413 / 0.0418 / 0.0447 (−9.8% / −8.7% / −2.4%). Same-budget 72-only control: 0.0413 (−9.7%) |
+| | [[288,12,18]], p = 0.06, 200 iterations, 10 000 shots | Random serial 0.0583. Mixture seeds: 0.0469 / 0.0484 / 0.0562 (−19.6% / −17.0% / −3.6%). Control: 0.0493 (−15.4%) |
 
 ![Task C: how decoding fails](figures/task_c.png)
 
@@ -93,6 +101,22 @@ but because stuck shots dominate, the trade now reduces the total. This is the l
 reason the policy transfers well despite not helping where it was trained.
 
 ![Robustness across training seeds](figures/robustness.png)
+
+![Task D: training on a mixture of Tanner graphs](figures/task_d_mixture.png)
+
+Task D asks whether training on a mixture of Tanner graphs *consistently* finds better
+schedules than random ordering. It does not:
+- **Seeds:** seeds 123 and 1 give clear gains, 6–9 paired standard errors, while seed 2
+  gives only 2–4%.
+- **Equal budget:** the mixture matches the 3 000-shot 72-only control and does not beat
+  it.
+- **Headline agent:** every mixture run is worse than the headline 15 000-shot agent.
+- **Learning signal:** [[144,12,12]] shots rarely fail, and during training they produced
+  4–7× fewer shots whose rollouts disagreed on success than [[72,12,6]] shots did. So most
+  of the learning signal still comes from the small code.
+
+Full tables, including the stuck/wrong split and the learned weights, are in
+[`results/task_d_summary.md`](results/task_d_summary.md).
 
 Figures for Tasks A and B: [`figures/task_a.png`](figures/task_a.png),
 [`figures/task_b_72_12_6.png`](figures/task_b_72_12_6.png).
@@ -111,8 +135,9 @@ Figures for Tasks A and B: [`figures/task_a.png`](figures/task_a.png),
   Differences between schedules are judged with the paired rescued/lost counts on identical
   errors, which are much tighter than the unpaired errors suggest. The Task C difference
   (+271/−266) is not significant.
-- **Training is not robust:** one of the five runs with the original features (seed 2) and
-  one of three with the residual feature (seed 123) end no better than random serial.
+- **Training is not robust:** one of the five runs with the original features (seed 2),
+  one of three with the residual feature (seed 123) and one of three mixture runs (seed 2)
+  end no better, or barely better, than random serial.
 - **No comparison with stronger decoders:** BP+OSD and other post-processing are not
   compared. The policy in the main results was trained on [[72,12,6]] at a single p.
 
@@ -137,7 +162,8 @@ These are deliberately left unchanged, so that `results/` stays exactly reproduc
   (shared vs per-shot generators); see [reproduce.md](reproduce.md#random-number-conventions).
 - **Future work:** circuit-level noise, a non-linear policy, longer training directly on
   the larger codes (the short [[144,12,12]] runs in `overnight_144_*.csv` did not beat the
-  policy trained on [[72,12,6]]), and the agent combined with OSD post-processing.
+  policy trained on [[72,12,6]]), a mixture run as long as the 15 000-shot headline
+  training, and the agent combined with OSD post-processing.
 
 ## Repository structure
 
